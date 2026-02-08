@@ -3,6 +3,7 @@ import subprocess
 import time
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
+
 try:
     from Quartz import (
         CGWindowListCopyWindowInfo, 
@@ -10,7 +11,6 @@ try:
         kCGNullWindowID
     )
 except ImportError:
-    # Fallback for environments where Quartz might not be available
     CGWindowListCopyWindowInfo = None
 
 # Initialize FastMCP server
@@ -31,8 +31,6 @@ def find_window_id(app_name: str):
     for window in window_list:
         owner_name = window.get("kCGWindowOwnerName", "")
         if app_name.lower() in owner_name.lower():
-            # Check if it's a standard window (has a name or is large enough)
-            # This helps filter out menu bar items and other small background windows
             window_name = window.get("kCGWindowName", "")
             bounds = window.get("kCGWindowBounds", {})
             if window_name or (bounds.get("getWidth", 0) > 100 and bounds.get("getHeight", 0) > 100):
@@ -55,7 +53,6 @@ def capture_screenshot(filename: str = None) -> str:
     filepath = CAPTURE_DIR / filename
     
     try:
-        # -x: silent, -C: capture cursor
         subprocess.run(["screencapture", "-x", "-C", str(filepath)], check=True)
         return f"Screenshot saved to: {filepath}"
     except subprocess.CalledProcessError as e:
@@ -82,7 +79,6 @@ def capture_window(app_name: str, filename: str = None) -> str:
     filepath = CAPTURE_DIR / filename
     
     try:
-        # -l: capture window by ID, -o: no shadow (optional, can be removed if shadow is desired)
         subprocess.run(["screencapture", "-l", str(window_id), "-o", str(filepath)], check=True)
         return f"Window capture of '{app_name}' saved to: {filepath}"
     except subprocess.CalledProcessError as e:
@@ -108,8 +104,6 @@ def record_video(duration_seconds: int = 5, filename: str = None) -> str:
     filepath = CAPTURE_DIR / filename
     
     try:
-        # -V: record video for seconds
-        # Note: In some macOS versions, -V might behave differently or require user permission
         subprocess.run(["screencapture", "-V", str(duration_seconds), str(filepath)], check=True)
         return f"Video recording saved to: {filepath}"
     except subprocess.CalledProcessError as e:
@@ -133,7 +127,6 @@ def list_windows() -> str:
         window_name = window.get("kCGWindowName", "")
         bounds = window.get("kCGWindowBounds", {})
         
-        # Filter for meaningful windows
         if owner_name and (window_name or (bounds.get("getWidth", 0) > 100 and bounds.get("getHeight", 0) > 100)):
             apps.add(owner_name)
     
@@ -142,5 +135,8 @@ def list_windows() -> str:
     
     return "Visible applications:\n" + "\n".join(sorted(apps))
 
-if __name__ == "__main__":
+def main():
     mcp.run()
+
+if __name__ == "__main__":
+    main()

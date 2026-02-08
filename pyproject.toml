@@ -6,11 +6,13 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp[cli]>=1.2.0",
-    "pyobjc>=10.0",
+    "pyobjc-core>=10.0",
+    "pyobjc-framework-Quartz>=10.0",
+    "pyobjc-framework-AVFoundation>=10.0",
 ]
 
 [project.scripts]
-screencapture-mcp = "server:mcp.run"
+screencapture-mcp = "screencapture_server:main"
 
 [build-system]
 requires = ["hatchling"]
