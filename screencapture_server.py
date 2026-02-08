@@ -3,26 +3,37 @@ import sys
 import subprocess
 import time
 from pathlib import Path
+from contextlib import contextmanager
 
-# MCP communication must happen on stdout. 
-# We must ensure no other library prints to stdout.
+# --- STDOUT GUARD START ---
+# Redirect stdout to stderr during imports and initialization
+# to prevent any library (like pyobjc or FastMCP init) from breaking the JSON-RPC stream.
+_original_stdout = sys.stdout
+sys.stdout = sys.stderr
+
 try:
-    from Quartz import (
-        CGWindowListCopyWindowInfo, 
-        kCGWindowListOptionOnScreenOnly, 
-        kCGNullWindowID
-    )
-except ImportError:
-    CGWindowListCopyWindowInfo = None
+    try:
+        from Quartz import (
+            CGWindowListCopyWindowInfo, 
+            kCGWindowListOptionOnScreenOnly, 
+            kCGNullWindowID
+        )
+    except ImportError:
+        CGWindowListCopyWindowInfo = None
 
-from mcp.server.fastmcp import FastMCP
+    from mcp.server.fastmcp import FastMCP
 
-# Initialize FastMCP server with explicit log level to avoid stdout pollution
-mcp = FastMCP("screencapture-mcp")
+    # Initialize FastMCP server
+    mcp = FastMCP("screencapture-mcp")
 
-# Ensure a directory for captures exists
-CAPTURE_DIR = Path.home() / "Desktop" / "MCP_Captures"
-CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
+    # Ensure a directory for captures exists
+    CAPTURE_DIR = Path.home() / "Desktop" / "MCP_Captures"
+    CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
+
+finally:
+    # Restore stdout right before we are ready to run
+    sys.stdout = _original_stdout
+# --- STDOUT GUARD END ---
 
 def find_window_id(app_name: str):
     """Finds the window ID for a given application name."""
