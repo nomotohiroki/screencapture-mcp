@@ -1,0 +1,5 @@
+__pycache__/
+*.png
+*.mov
+venv/
+.DS_Store
