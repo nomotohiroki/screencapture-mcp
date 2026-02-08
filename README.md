@@ -17,20 +17,28 @@ source venv/bin/activate
 pip install mcp pyobjc
 ```
 
-## 実行
+## 実行 (uvxを使用)
+
+インストール不要で、GitHubのリポジトリから直接実行できます。
 
 ```bash
-python server.py
+uvx --from git+https://github.com/nomotohiroki/screencapture-mcp.git screencapture-mcp
 ```
 
 ## MCP設定例 (Claude Desktopなど)
+
+`uvx` を使用してGitHubから直接読み込む設定です。これにより、常に最新のツールが利用可能になります。
 
 ```json
 {
   "mcpServers": {
     "screencapture": {
-      "command": "/path/to/screencapture-mcp/venv/bin/python3",
-      "args": ["/path/to/screencapture-mcp/server.py"]
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/nomotohiroki/screencapture-mcp.git",
+        "screencapture-mcp"
+      ]
     }
   }
 }
