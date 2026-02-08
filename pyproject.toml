@@ -1,0 +1,17 @@
+[project]
+name = "screencapture-mcp"
+version = "0.1.0"
+description = "MCP server for macOS screen capture and video recording"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.2.0",
+    "pyobjc>=10.0",
+]
+
+[project.scripts]
+screencapture-mcp = "server:mcp.run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
