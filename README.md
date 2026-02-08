@@ -5,7 +5,9 @@ macOS標準の `screencapture` コマンドを使用して、スクリーンシ�
 ## 機能
 
 - `capture_screenshot`: 現在の画面を静止画（PNG）として保存します。
+- `capture_window`: 特定のアプリケーションウィンドウを検索してスクリーンショットを撮影します。
 - `record_video`: 指定した秒数（デフォルト5秒、最大60秒）の動画（MOV）を録画します。
+- `list_windows`: 現在開いている（表示されている）アプリケーションウィンドウの一覧を表示します。
 
 保存先はデフォルトで `~/Desktop/MCP_Captures` です。
 

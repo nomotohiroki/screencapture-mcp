@@ -9,6 +9,18 @@ dependencies = [
     "pyobjc>=10.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pylint>=3.0.0",
+    "flake8>=7.0.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
+    "pytest>=7.0.0",
+    "pytest-mock>=3.10.0",
+    "safety>=2.0.0",
+    "types-setuptools",
+]
+
 [project.scripts]
 screencapture-mcp = "screencapture_server:main"
 
