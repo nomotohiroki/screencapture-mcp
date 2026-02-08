@@ -12,6 +12,9 @@ dependencies = [
 [project.scripts]
 screencapture-mcp = "screencapture_server:main"
 
+[tool.hatch.build.targets.wheel]
+packages = ["screencapture_server.py"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
