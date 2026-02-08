@@ -1,5 +1,5 @@
 import sys
-import subprocess
+import subprocess  # nosec B404
 import time
 import argparse
 from pathlib import Path
@@ -49,9 +49,9 @@ def find_window_id(app_name: str) -> int | None:
         if app_name.lower() in owner_name.lower():
             window_name = window.get("kCGWindowName", "")
             bounds = window.get("kCGWindowBounds", {})
-            if window_name or (
-                bounds.get("getWidth", 0) > 100 and bounds.get("getHeight", 0) > 100
-            ):
+            if (window_name
+                    or (bounds.get("getWidth", 0) > 100
+                        and bounds.get("getHeight", 0) > 100)):
                 return window.get("kCGWindowNumber")
     return None
 
@@ -77,7 +77,7 @@ def capture_screenshot(filename: str | None = None) -> str:
     filepath = DEFAULT_CAPTURE_DIR / filename
 
     try:
-        subprocess.run(
+        subprocess.run(  # nosec B603
             ["/usr/sbin/screencapture", "-x", "-C", str(filepath)],
             check=True,
             capture_output=True
@@ -111,7 +111,7 @@ def capture_window(app_name: str, filename: str | None = None) -> str:
     filepath = DEFAULT_CAPTURE_DIR / filename
 
     try:
-        subprocess.run(
+        subprocess.run(  # nosec B603
             ["/usr/sbin/screencapture", "-l", str(window_id), "-o", str(filepath)],
             check=True,
             capture_output=True
@@ -143,7 +143,7 @@ def record_video(duration_seconds: int = 5, filename: str | None = None) -> str:
     filepath = DEFAULT_CAPTURE_DIR / filename
 
     try:
-        subprocess.run(
+        subprocess.run(  # nosec B603
             ["/usr/sbin/screencapture", "-V", str(duration_seconds), str(filepath)],
             check=True,
             capture_output=True
@@ -198,10 +198,10 @@ def main():
     global DEFAULT_CAPTURE_DIR
     if args.output_dir:
         DEFAULT_CAPTURE_DIR = Path(args.output_dir)
-    
+
     # Ensure directory exists
     DEFAULT_CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     mcp.run()
 
 
