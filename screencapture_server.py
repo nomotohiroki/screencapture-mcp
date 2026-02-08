@@ -1,11 +1,10 @@
 import sys
 import subprocess
 import time
+import argparse
 from pathlib import Path
 
 # --- STDOUT GUARD START ---
-# Redirect stdout to stderr during imports and initialization
-# to prevent any library (like pyobjc or FastMCP init) from breaking the JSON-RPC stream.
 _original_stdout = sys.stdout
 sys.stdout = sys.stderr
 
@@ -21,17 +20,20 @@ try:
 
     from mcp.server.fastmcp import FastMCP
 
-    # Initialize FastMCP server
-    mcp = FastMCP("screencapture-mcp")
-
-    # Ensure a directory for captures exists
-    CAPTURE_DIR = Path.home() / "Desktop" / "MCP_Captures"
-    CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
-
 finally:
-    # Restore stdout right before we are ready to run
     sys.stdout = _original_stdout
 # --- STDOUT GUARD END ---
+
+# Global server instance (will be configured in main)
+mcp = FastMCP("screencapture-mcp")
+DEFAULT_CAPTURE_DIR = Path(__file__).parent / "Mcp_Captures"
+
+
+def get_capture_dir(custom_dir: str | None = None) -> Path:
+    """Returns the capture directory, creating it if necessary."""
+    path = Path(custom_dir) if custom_dir else DEFAULT_CAPTURE_DIR
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
 def find_window_id(app_name: str) -> int | None:
@@ -47,7 +49,6 @@ def find_window_id(app_name: str) -> int | None:
         if app_name.lower() in owner_name.lower():
             window_name = window.get("kCGWindowName", "")
             bounds = window.get("kCGWindowBounds", {})
-            # Check if window has a name or significant size to filter out overlays
             if window_name or (
                 bounds.get("getWidth", 0) > 100 and bounds.get("getHeight", 0) > 100
             ):
@@ -58,7 +59,7 @@ def find_window_id(app_name: str) -> int | None:
 @mcp.tool()
 def capture_screenshot(filename: str | None = None) -> str:
     """
-    Captures a screenshot of the main display and saves it to the Desktop.
+    Captures a screenshot of the main display.
 
     Args:
         filename: Optional filename for the screenshot.
@@ -71,10 +72,11 @@ def capture_screenshot(filename: str | None = None) -> str:
     if not filename.endswith(".png"):
         filename += ".png"
 
-    filepath = CAPTURE_DIR / filename
+    # mcp.run() will be called with the configured directory
+    # For now we use the global DEFAULT_CAPTURE_DIR which might be overridden in main
+    filepath = DEFAULT_CAPTURE_DIR / filename
 
     try:
-        # Using subprocess with capture_output to prevent leaking info to stdout
         subprocess.run(
             ["/usr/sbin/screencapture", "-x", "-C", str(filepath)],
             check=True,
@@ -106,7 +108,7 @@ def capture_window(app_name: str, filename: str | None = None) -> str:
     if not filename.endswith(".png"):
         filename += ".png"
 
-    filepath = CAPTURE_DIR / filename
+    filepath = DEFAULT_CAPTURE_DIR / filename
 
     try:
         subprocess.run(
@@ -138,7 +140,7 @@ def record_video(duration_seconds: int = 5, filename: str | None = None) -> str:
     if not filename.endswith(".mov"):
         filename += ".mov"
 
-    filepath = CAPTURE_DIR / filename
+    filepath = DEFAULT_CAPTURE_DIR / filename
 
     try:
         subprocess.run(
@@ -185,7 +187,21 @@ def list_windows() -> str:
 
 def main():
     """Main entry point for the MCP server."""
-    # Final safety check: ensure stdout is not used for anything but MCP
+    parser = argparse.ArgumentParser(description="MCP server for macOS screen capture")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help="Directory to save captures (default: project_dir/Mcp_Captures)"
+    )
+    args = parser.parse_args()
+
+    global DEFAULT_CAPTURE_DIR
+    if args.output_dir:
+        DEFAULT_CAPTURE_DIR = Path(args.output_dir)
+    
+    # Ensure directory exists
+    DEFAULT_CAPTURE_DIR.mkdir(parents=True, exist_ok=True)
+    
     mcp.run()
 
 
