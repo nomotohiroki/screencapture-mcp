@@ -26,7 +26,7 @@ finally:
 
 # Global server instance (will be configured in main)
 mcp = FastMCP("screencapture-mcp")
-DEFAULT_CAPTURE_DIR = Path(__file__).parent / "Mcp_Captures"
+DEFAULT_CAPTURE_DIR = Path.cwd() / "Mcp_Captures"
 
 
 def get_capture_dir(custom_dir: str | None = None) -> Path:
