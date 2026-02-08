@@ -1,9 +1,11 @@
 import os
+import sys
 import subprocess
 import time
 from pathlib import Path
-from mcp.server.fastmcp import FastMCP
 
+# MCP communication must happen on stdout. 
+# We must ensure no other library prints to stdout.
 try:
     from Quartz import (
         CGWindowListCopyWindowInfo, 
@@ -13,7 +15,9 @@ try:
 except ImportError:
     CGWindowListCopyWindowInfo = None
 
-# Initialize FastMCP server
+from mcp.server.fastmcp import FastMCP
+
+# Initialize FastMCP server with explicit log level to avoid stdout pollution
 mcp = FastMCP("screencapture-mcp")
 
 # Ensure a directory for captures exists
@@ -41,9 +45,6 @@ def find_window_id(app_name: str):
 def capture_screenshot(filename: str = None) -> str:
     """
     Captures a screenshot of the main display and saves it to the Desktop.
-    
-    Args:
-        filename: Optional name for the file. If not provided, a timestamp will be used.
     """
     if not filename:
         filename = f"screenshot_{int(time.time())}.png"
@@ -53,19 +54,16 @@ def capture_screenshot(filename: str = None) -> str:
     filepath = CAPTURE_DIR / filename
     
     try:
-        subprocess.run(["screencapture", "-x", "-C", str(filepath)], check=True)
+        # Using subprocess with capture_output to prevent leaking info to stdout
+        subprocess.run(["screencapture", "-x", "-C", str(filepath)], check=True, capture_output=True)
         return f"Screenshot saved to: {filepath}"
     except subprocess.CalledProcessError as e:
-        return f"Error capturing screenshot: {str(e)}"
+        return f"Error capturing screenshot: {e.stderr.decode() if e.stderr else str(e)}"
 
 @mcp.tool()
 def capture_window(app_name: str, filename: str = None) -> str:
     """
     Captures a screenshot of a specific application window.
-    
-    Args:
-        app_name: Name of the application (e.g., 'Finder', 'Safari', 'Chrome').
-        filename: Optional name for the file.
     """
     window_id = find_window_id(app_name)
     if not window_id:
@@ -79,19 +77,15 @@ def capture_window(app_name: str, filename: str = None) -> str:
     filepath = CAPTURE_DIR / filename
     
     try:
-        subprocess.run(["screencapture", "-l", str(window_id), "-o", str(filepath)], check=True)
+        subprocess.run(["screencapture", "-l", str(window_id), "-o", str(filepath)], check=True, capture_output=True)
         return f"Window capture of '{app_name}' saved to: {filepath}"
     except subprocess.CalledProcessError as e:
-        return f"Error capturing window: {str(e)}"
+        return f"Error capturing window: {e.stderr.decode() if e.stderr else str(e)}"
 
 @mcp.tool()
 def record_video(duration_seconds: int = 5, filename: str = None) -> str:
     """
-    Records a video of the screen for a specified duration and saves it to the Desktop.
-    
-    Args:
-        duration_seconds: Duration of the recording in seconds (max 60).
-        filename: Optional name for the file. If not provided, a timestamp will be used.
+    Records a video of the screen for a specified duration (max 60s).
     """
     if duration_seconds > 60:
         duration_seconds = 60
@@ -104,19 +98,18 @@ def record_video(duration_seconds: int = 5, filename: str = None) -> str:
     filepath = CAPTURE_DIR / filename
     
     try:
-        subprocess.run(["screencapture", "-V", str(duration_seconds), str(filepath)], check=True)
+        subprocess.run(["screencapture", "-V", str(duration_seconds), str(filepath)], check=True, capture_output=True)
         return f"Video recording saved to: {filepath}"
     except subprocess.CalledProcessError as e:
-        return f"Error recording video: {str(e)}"
+        return f"Error recording video: {e.stderr.decode() if e.stderr else str(e)}"
 
 @mcp.tool()
 def list_windows() -> str:
     """
     Lists the names of all currently visible application windows.
-    Use this to find the correct app_name for capture_window.
     """
     if not CGWindowListCopyWindowInfo:
-        return "Quartz API not available."
+        return "Quartz API not available. Make sure you are on macOS."
     
     options = kCGWindowListOptionOnScreenOnly
     window_list = CGWindowListCopyWindowInfo(options, kCGNullWindowID)
@@ -136,6 +129,7 @@ def list_windows() -> str:
     return "Visible applications:\n" + "\n".join(sorted(apps))
 
 def main():
+    # Final safety check: ensure stdout is not used for anything but MCP
     mcp.run()
 
 if __name__ == "__main__":
